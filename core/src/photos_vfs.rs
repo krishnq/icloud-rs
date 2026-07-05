@@ -236,10 +236,43 @@ impl Filesystem for ICloudPhotosFS {
     }
 
     fn open(&mut self, _req: &Request, ino: u64, _flags: i32, reply: ReplyOpen) {
-        if let Some(_photo) = self.find_cached_photo(ino) {
+        if let Some(photo) = self.find_cached_photo(ino).cloned() {
             let fh = self.next_fh;
             self.next_fh += 1;
             reply.opened(fh, 0);
+
+            // Pre-fetch typical EXIF metadata locations (first & last 64KB)
+            let cache_clone = Arc::clone(&self.chunk_cache);
+            let client_clone = Arc::clone(&self.client);
+            let size = photo.size;
+            let download_url = photo.download_url.clone();
+            
+            self.rt.spawn(async move {
+                let chunk_size = 65536;
+                let fetch_ranges = if size <= chunk_size * 2 {
+                    // Small file, fetch everything
+                    vec![(0, size)]
+                } else {
+                    vec![
+                        (0, chunk_size),
+                        (size - chunk_size, chunk_size)
+                    ]
+                };
+
+                for (offset, len) in fetch_ranges {
+                    if len == 0 { continue; }
+                    let range_header = format!("bytes={}-{}", offset, offset + len - 1);
+                    if let Ok(res) = client_clone.http_client.get(&download_url).header("Range", &range_header).send().await {
+                        if res.status().is_success() || res.status() == reqwest::StatusCode::PARTIAL_CONTENT {
+                            if let Ok(bytes) = res.bytes().await {
+                                if let Ok(mut cache) = cache_clone.lock() {
+                                    cache.entry(fh).or_insert_with(Vec::new).push((offset, bytes.to_vec()));
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         } else {
             reply.error(ENOENT);
         }
@@ -276,9 +309,15 @@ impl Filesystem for ICloudPhotosFS {
                         if offset_u64 >= chunk.0 && offset_u64 < chunk.0 + chunk.1.len() as u64 {
                             let start_idx = (offset_u64 - chunk.0) as usize;
                             let available = chunk.1.len() - start_idx;
-                            let return_size = std::cmp::min(size_usize, available);
-                            safe_reply.data(&chunk.1[start_idx..start_idx + return_size]);
-                            return;
+                            
+                            // FUSE kernel read-ahead treats short reads as EOF!
+                            // Only return cached data if we can satisfy the ENTIRE request
+                            // OR if we are truly at the end of the file.
+                            if available >= size_usize || (chunk.0 + chunk.1.len() as u64) >= photo.size {
+                                let return_size = std::cmp::min(size_usize, available);
+                                safe_reply.data(&chunk.1[start_idx..start_idx + return_size]);
+                                return;
+                            }
                         }
                     }
                 }
