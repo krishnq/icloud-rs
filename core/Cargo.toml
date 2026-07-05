@@ -31,5 +31,5 @@ libc = "0.2"
 
 # Security & Persistence
 keyring = "2.3"
-directories = "5.0"
+directories = "6.0"
 toml = "0.8"
