@@ -22,7 +22,7 @@ base64 = "0.22"
 # Utilities
 url = "2.5"
 log = "0.4"
-thiserror = "1.0" # Clean error handling for API failures
+thiserror = "2.0" # Clean error handling for API failures
 futures-util = "0.3"
 
 # FUSE Virtual File System
