@@ -1,5 +1,5 @@
 [package]
-name = "icloud-rs"
+name = "cloudsync-core"
 version = "0.1.0"
 edition = "2021"
 description = "A high-performance, async Rust client for Apple iCloud services."

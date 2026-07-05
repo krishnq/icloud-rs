@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use icloud_rs::ICloudClient;
+use cloudsync_core::icloud::core::client::ICloudClient;
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
 pub struct AppState(pub Arc<Mutex<Option<ICloudClient>>>);
@@ -16,7 +16,7 @@ struct InitResponse {
 
 #[tauri::command]
 async fn init_app(state: tauri::State<'_, AppState>) -> Result<InitResponse, String> {
-    let config = icloud_rs::config::load_config();
+    let config = cloudsync_core::icloud::core::config::load_config();
     
     // For now, handle the first iCloud account found in config
     let account = config.accounts.iter().find(|(_, c)| c.account_type == "icloud");
@@ -33,7 +33,7 @@ async fn init_app(state: tauri::State<'_, AppState>) -> Result<InitResponse, Str
     }
 
     if let Some((account_name, acc_cfg)) = account {
-        if let Ok(session_data) = icloud_rs::client::SessionData::load_from_keyring(account_name) {
+        if let Ok(session_data) = cloudsync_core::icloud::core::client::SessionData::load_from_keyring(account_name) {
             println!("Found credentials for {} in keyring!", account_name);
             let mut client = ICloudClient::new("").map_err(|e| e.to_string())?;
             client.session_data = session_data.clone();
@@ -57,7 +57,7 @@ async fn init_app(state: tauri::State<'_, AppState>) -> Result<InitResponse, Str
                     let p = drive_path.clone();
                     std::thread::spawn(move || {
                         println!("Auto-mounting FUSE drive at {}...", p);
-                        let _ = icloud_rs::drive_vfs::mount_drive(c, &p);
+                        let _ = cloudsync_core::icloud::drive::vfs::mount_drive(c, &p);
                     });
                 }
                 if let Some(photos_path) = &acc_cfg.mount_photos {
@@ -65,7 +65,7 @@ async fn init_app(state: tauri::State<'_, AppState>) -> Result<InitResponse, Str
                     let p = photos_path.clone();
                     std::thread::spawn(move || {
                         println!("Auto-mounting FUSE photos at {}...", p);
-                        let _ = icloud_rs::photos_vfs::mount_photos(c, &p);
+                        let _ = cloudsync_core::icloud::photos::vfs::mount_photos(c, &p);
                     });
                 }
                 
@@ -157,7 +157,7 @@ async fn mount_drive(state: tauri::State<'_, AppState>, drive_path: String) -> R
     // Spawn a standard OS thread because fuser::mount2 blocks forever
     std::thread::spawn(move || {
         println!("Mounting FUSE drive at {}...", drive_path);
-        match icloud_rs::drive_vfs::mount_drive(client, &drive_path) {
+        match cloudsync_core::icloud::drive::vfs::mount_drive(client, &drive_path) {
             Ok(_) => println!("FUSE drive unmounted normally."),
             Err(e) => eprintln!("FUSE MOUNT ERROR: {}", e),
         }
@@ -175,7 +175,7 @@ async fn mount_photos(state: tauri::State<'_, AppState>, photos_path: String) ->
 
     std::thread::spawn(move || {
         println!("Mounting FUSE photos at {}...", photos_path);
-        match icloud_rs::photos_vfs::mount_photos(client, &photos_path) {
+        match cloudsync_core::icloud::photos::vfs::mount_photos(client, &photos_path) {
             Ok(_) => println!("FUSE photos unmounted normally."),
             Err(e) => eprintln!("FUSE PHOTOS MOUNT ERROR: {}", e),
         }

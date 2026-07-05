@@ -1,4 +1,4 @@
-use crate::client::ICloudClient;
+use crate::icloud::core::client::ICloudClient;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use futures_util::StreamExt; // For streaming the response body

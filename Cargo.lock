@@ -593,7 +593,7 @@ dependencies = [
 name = "cloudsync"
 version = "0.1.0"
 dependencies = [
- "icloud-rs",
+ "cloudsync-core",
  "serde",
  "serde_json",
  "tauri",
@@ -601,6 +601,27 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
  "tokio",
+]
+
+[[package]]
+name = "cloudsync-core"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "directories",
+ "fuser",
+ "futures-util",
+ "keyring",
+ "libc",
+ "log",
+ "reqwest 0.12.28",
+ "ring",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "toml 0.8.2",
+ "url",
 ]
 
 [[package]]
@@ -1862,27 +1883,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
 dependencies = [
  "cc",
-]
-
-[[package]]
-name = "icloud-rs"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "directories",
- "fuser",
- "futures-util",
- "keyring",
- "libc",
- "log",
- "reqwest 0.12.28",
- "ring",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "toml 0.8.2",
- "url",
 ]
 
 [[package]]

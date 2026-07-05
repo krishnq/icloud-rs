@@ -1,4 +1,4 @@
-use crate::client::ICloudClient;
+use crate::icloud::core::client::ICloudClient;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

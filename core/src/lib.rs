@@ -1,11 +1,4 @@
-pub mod auth;
-pub mod client;
-pub mod downloader;
-pub mod photos;
-pub mod drive;
-pub mod drive_vfs;
-pub mod photos_vfs;
-pub mod config;
+pub mod icloud;
 
-pub use client::ICloudClient;
-pub use client::SessionData;
+pub use icloud::core::client::ICloudClient;
+pub use icloud::core::client::SessionData;

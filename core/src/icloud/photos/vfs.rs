@@ -7,8 +7,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::runtime::Runtime;
 use tokio::sync::Semaphore;
 
-use crate::photos::{PhotoAlbum, PhotoAsset};
-use crate::client::ICloudClient;
+use crate::icloud::photos::api::{PhotoAlbum, PhotoAsset};
+use crate::icloud::core::client::ICloudClient;
 
 const TTL: Duration = Duration::from_secs(1);
 

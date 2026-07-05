@@ -1,4 +1,4 @@
-use crate::client::ICloudClient;
+use crate::icloud::core::client::ICloudClient;
 
 impl ICloudClient {
     /// Injects raw cookies harvested from a webview into the reqwest cookie jar.
