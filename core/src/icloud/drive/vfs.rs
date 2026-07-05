@@ -128,17 +128,14 @@ impl Filesystem for ICloudDriveFS {
         
         if let Some(node) = self.nodes_cache.values().flatten().find(|n| self.get_inode_for_id(&n.id) == ino) {
             let mut attr = DIR_ATTR;
-            let now = SystemTime::now();
             attr.ino = ino;
-            attr.mtime = now;
-            attr.atime = now;
-            attr.ctime = now;
-            attr.crtime = now;
             if node.is_dir {
                 attr.kind = FileType::Directory;
             } else {
                 attr.kind = FileType::RegularFile;
                 attr.size = node.size.unwrap_or(0);
+                attr.blocks = (attr.size + 511) / 512;
+                attr.nlink = 1;
                 attr.perm = 0o644;
             }
             reply.attr(&TTL, &attr);
@@ -154,18 +151,15 @@ impl Filesystem for ICloudDriveFS {
         if let Some(nodes) = self.nodes_cache.get(&parent) {
             if let Some(node) = nodes.iter().find(|n| Some(n.name.as_str()) == name.to_str()) {
                 let mut attr = DIR_ATTR;
-                let now = SystemTime::now();
                 attr.ino = self.get_inode_for_id(&node.id);
-                attr.mtime = now;
-                attr.atime = now;
-                attr.ctime = now;
-                attr.crtime = now;
                 
                 if node.is_dir {
                     attr.kind = FileType::Directory;
                 } else {
                     attr.kind = FileType::RegularFile;
                     attr.size = node.size.unwrap_or(0);
+                    attr.blocks = (attr.size + 511) / 512;
+                    attr.nlink = 1;
                     attr.perm = 0o644;
                 }
                 reply.entry(&TTL, &attr, 0);

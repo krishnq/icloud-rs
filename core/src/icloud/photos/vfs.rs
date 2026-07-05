@@ -139,12 +139,7 @@ impl Filesystem for ICloudPhotosFS {
         if let Some(albums) = &self.albums {
             if albums.iter().any(|a| self.get_inode_for_id(&a.id) == ino) {
                 let mut attr = DIR_ATTR;
-                let now = SystemTime::now();
                 attr.ino = ino;
-                attr.mtime = now;
-                attr.atime = now;
-                attr.ctime = now;
-                attr.crtime = now;
                 reply.attr(&TTL, &attr);
                 return;
             }
@@ -152,15 +147,12 @@ impl Filesystem for ICloudPhotosFS {
         
         if let Some(photo) = self.find_cached_photo(ino) {
             let mut attr = DIR_ATTR;
-            let now = SystemTime::now();
             attr.ino = ino;
             attr.kind = FileType::RegularFile;
             attr.size = photo.size;
+            attr.blocks = (photo.size + 511) / 512;
+            attr.nlink = 1;
             attr.perm = 0o644;
-            attr.mtime = now;
-            attr.atime = now;
-            attr.ctime = now;
-            attr.crtime = now;
             reply.attr(&TTL, &attr);
             return;
         }
@@ -184,15 +176,12 @@ impl Filesystem for ICloudPhotosFS {
             if let Some(photos) = self.album_photos.get(&parent) {
                 if let Some(photo) = photos.iter().find(|p| Some(p.name.as_str()) == name.to_str()) {
                     let mut attr = DIR_ATTR;
-                    let now = SystemTime::now();
                     attr.ino = self.get_inode_for_id(&photo.id);
                     attr.kind = FileType::RegularFile;
                     attr.size = photo.size;
+                    attr.blocks = (photo.size + 511) / 512;
+                    attr.nlink = 1;
                     attr.perm = 0o644;
-                    attr.mtime = now;
-                    attr.atime = now;
-                    attr.ctime = now;
-                    attr.crtime = now;
                     reply.entry(&TTL, &attr, 0);
                     return;
                 }
@@ -236,43 +225,10 @@ impl Filesystem for ICloudPhotosFS {
     }
 
     fn open(&mut self, _req: &Request, ino: u64, _flags: i32, reply: ReplyOpen) {
-        if let Some(photo) = self.find_cached_photo(ino).cloned() {
+        if let Some(_) = self.find_cached_photo(ino) {
             let fh = self.next_fh;
             self.next_fh += 1;
             reply.opened(fh, 0);
-
-            // Pre-fetch typical EXIF metadata locations (first & last 64KB)
-            let cache_clone = Arc::clone(&self.chunk_cache);
-            let client_clone = Arc::clone(&self.client);
-            let size = photo.size;
-            let download_url = photo.download_url.clone();
-            
-            self.rt.spawn(async move {
-                let chunk_size = 65536;
-                let fetch_ranges = if size <= chunk_size * 2 {
-                    // Small file, fetch everything
-                    vec![(0, size)]
-                } else {
-                    vec![
-                        (0, chunk_size),
-                        (size - chunk_size, chunk_size)
-                    ]
-                };
-
-                for (offset, len) in fetch_ranges {
-                    if len == 0 { continue; }
-                    let range_header = format!("bytes={}-{}", offset, offset + len - 1);
-                    if let Ok(res) = client_clone.http_client.get(&download_url).header("Range", &range_header).send().await {
-                        if res.status().is_success() || res.status() == reqwest::StatusCode::PARTIAL_CONTENT {
-                            if let Ok(bytes) = res.bytes().await {
-                                if let Ok(mut cache) = cache_clone.lock() {
-                                    cache.entry(fh).or_insert_with(Vec::new).push((offset, bytes.to_vec()));
-                                }
-                            }
-                        }
-                    }
-                }
-            });
         } else {
             reply.error(ENOENT);
         }
