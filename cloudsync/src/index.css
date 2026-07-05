@@ -1,0 +1,30 @@
+:root {
+  --bg-color: #f5f5f7;
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --text-color: #1d1d1f;
+  --accent-color: #0071e3;
+  --border-color: rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #000000;
+    --card-bg: rgba(28, 28, 30, 0.7);
+    --text-color: #f5f5f7;
+    --accent-color: #2997ff;
+    --border-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
