@@ -620,7 +620,7 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "tokio",
- "toml 0.8.2",
+ "toml 1.1.2+spec-1.1.0",
  "url",
 ]
 

@@ -32,4 +32,4 @@ libc = "0.2"
 # Security & Persistence
 keyring = "2.3"
 directories = "5.0"
-toml = "0.8"
+toml = "1.1"
