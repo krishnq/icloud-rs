@@ -30,6 +30,6 @@ fuser = "0.14"
 libc = "0.2"
 
 # Security & Persistence
-keyring = "2.3"
+keyring = "4.1"
 directories = "5.0"
 toml = "0.8"
